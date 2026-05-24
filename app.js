@@ -29,6 +29,83 @@ let deletingTaskId = null;
 let modalSubtasks = [];
 let currentUser = null;
 
+// ─── Particle System ─────────────────────────────────────
+const $particleCanvas = document.getElementById('particle-canvas');
+const pCtx = $particleCanvas.getContext('2d');
+let particles = [];
+
+function resizeParticleCanvas() {
+    $particleCanvas.width = window.innerWidth;
+    $particleCanvas.height = window.innerHeight;
+}
+resizeParticleCanvas();
+window.addEventListener('resize', resizeParticleCanvas);
+
+function spawnParticles(x, y, color, count = 12) {
+    for (let i = 0; i < count; i++) {
+        const angle = (Math.PI * 2 * i) / count + (Math.random() - 0.5) * 0.5;
+        const speed = Math.random() * 5 + 2;
+        particles.push({
+            x, y,
+            vx: Math.cos(angle) * speed,
+            vy: Math.sin(angle) * speed - 1,
+            size: Math.random() * 4 + 2,
+            color,
+            life: 1,
+            decay: Math.random() * 0.02 + 0.012,
+        });
+    }
+}
+
+function spawnConfetti(x, y) {
+    const colors = ['#6C5CE7', '#a29bfe', '#fd79a8', '#00cec9', '#fdcb6e', '#55efc4'];
+    for (let i = 0; i < 40; i++) {
+        particles.push({
+            x: x + (Math.random() - 0.5) * 60,
+            y: y + (Math.random() - 0.5) * 20,
+            vx: (Math.random() - 0.5) * 10,
+            vy: Math.random() * -8 - 2,
+            size: Math.random() * 6 + 3,
+            color: colors[Math.floor(Math.random() * colors.length)],
+            life: 1,
+            decay: Math.random() * 0.008 + 0.004,
+            isConfetti: true,
+            rotation: Math.random() * 360,
+            rotSpeed: (Math.random() - 0.5) * 12,
+        });
+    }
+}
+
+function animateParticles() {
+    pCtx.clearRect(0, 0, $particleCanvas.width, $particleCanvas.height);
+    particles = particles.filter(p => p.life > 0);
+    particles.forEach(p => {
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vy += 0.12;
+        p.vx *= 0.99;
+        p.life -= p.decay;
+
+        pCtx.save();
+        pCtx.globalAlpha = Math.max(0, p.life);
+        pCtx.fillStyle = p.color;
+
+        if (p.isConfetti) {
+            pCtx.translate(p.x, p.y);
+            p.rotation += p.rotSpeed;
+            pCtx.rotate(p.rotation * Math.PI / 180);
+            pCtx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 0.6);
+        } else {
+            pCtx.beginPath();
+            pCtx.arc(p.x, p.y, p.size * p.life, 0, Math.PI * 2);
+            pCtx.fill();
+        }
+        pCtx.restore();
+    });
+    requestAnimationFrame(animateParticles);
+}
+animateParticles();
+
 // ─── DOM Elements ────────────────────────────────────────
 // Screens
 const $loadingScreen = document.getElementById('loading-screen');
@@ -232,6 +309,8 @@ async function createTask(taskData) {
             updatedAt: serverTimestamp(),
         });
         showToast('새 업무가 추가되었습니다.');
+        // Confetti celebration for new task
+        spawnConfetti(window.innerWidth / 2, window.innerHeight / 2);
         await loadTasks();
     } catch (error) {
         console.error('Create task error:', error);
@@ -523,6 +602,9 @@ async function saveTask() {
             await createTask(taskData);
         }
         hideModal($modalOverlay);
+        // Particles on save
+        const btnRect = document.getElementById('btn-save').getBoundingClientRect();
+        spawnParticles(btnRect.left + btnRect.width / 2, btnRect.top, '#a29bfe', 15);
     } catch (error) {
         // Error already handled in CRUD functions
     } finally {
@@ -550,6 +632,11 @@ async function confirmDelete() {
         await new Promise(r => setTimeout(r, 350));
     }
 
+    // Red particles on delete
+    if (card) {
+        const r = card.getBoundingClientRect();
+        spawnParticles(r.left + r.width / 2, r.top + r.height / 2, '#ff6b6b', 20);
+    }
     await removeTask(deletingTaskId);
     deletingTaskId = null;
     hideModal($deleteOverlay);
@@ -567,6 +654,15 @@ async function toggleSubtask(taskId, subtaskId) {
     if (!subtask) return;
 
     subtask.completed = !subtask.completed;
+
+    // Particle burst on check
+    if (subtask.completed) {
+        const checkEl = document.querySelector(`.subtask-check[data-task-id="${taskId}"][data-subtask-id="${subtaskId}"]`);
+        if (checkEl) {
+            const r = checkEl.getBoundingClientRect();
+            spawnParticles(r.left + r.width / 2, r.top + r.height / 2, '#a29bfe', 10);
+        }
+    }
 
     // Auto-update task status
     const allDone = task.subtasks.every(s => s.completed);
@@ -599,7 +695,12 @@ async function toggleSubtask(taskId, subtaskId) {
 function setFilter(filter) {
     currentFilter = filter;
     $filterTabs.forEach(tab => {
-        tab.classList.toggle('active', tab.dataset.filter === filter);
+        const isActive = tab.dataset.filter === filter;
+        tab.classList.toggle('active', isActive);
+        if (isActive) {
+            const r = tab.getBoundingClientRect();
+            spawnParticles(r.left + r.width / 2, r.top + r.height / 2, '#6C5CE7', 6);
+        }
     });
     renderTasks();
 }

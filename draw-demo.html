@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SVG 그리기 효과 데모</title>
+    <style>
+        body {
+            background: #0a0a12;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            gap: 40px;
+            font-family: 'Inter', sans-serif;
+            color: #f0f0f5;
+        }
+        h2 { font-size: 1.2rem; color: #8888a8; font-weight: 500; }
+        .row { display: flex; gap: 60px; align-items: center; }
+        p { color: #5a5a78; font-size: 0.85rem; text-align: center; margin-top: 8px; }
+        button {
+            margin-top: 20px;
+            padding: 12px 28px;
+            background: linear-gradient(135deg, #6C5CE7, #a29bfe);
+            border: none;
+            color: white;
+            font-size: 0.9rem;
+            font-weight: 600;
+            border-radius: 50px;
+            cursor: pointer;
+        }
+
+        /* 그리기 애니메이션 핵심 */
+        .draw {
+            stroke-dasharray: 200;
+            stroke-dashoffset: 200;
+            animation: draw 2s ease forwards;
+        }
+
+        @keyframes draw {
+            to { stroke-dashoffset: 0; }
+        }
+    </style>
+</head>
+<body>
+    <h2>클릭하면 다시 재생됩니다 👇</h2>
+
+    <div class="row">
+        <div>
+            <!-- 체크마크 그리기 -->
+            <svg width="120" height="120" viewBox="0 0 120 120" fill="none">
+                <circle cx="60" cy="60" r="50" stroke="#6C5CE7" stroke-width="3" class="draw" style="stroke-dasharray:320;stroke-dashoffset:320; animation: draw 1.5s ease forwards;"/>
+                <path d="M35 62 L52 78 L85 42" stroke="#a29bfe" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" class="draw" style="animation-delay:1s;"/>
+            </svg>
+            <p>체크마크 ✓</p>
+        </div>
+
+        <div>
+            <!-- 별 그리기 -->
+            <svg width="120" height="120" viewBox="0 0 120 120" fill="none">
+                <path d="M60 10 L72 45 L108 45 L78 68 L88 105 L60 82 L32 105 L42 68 L12 45 L48 45 Z" stroke="#fdcb6e" stroke-width="3" stroke-linejoin="round" fill="none" class="draw" style="stroke-dasharray:350;stroke-dashoffset:350; animation: draw 2.5s ease forwards;"/>
+            </svg>
+            <p>별 ⭐</p>
+        </div>
+
+        <div>
+            <!-- 하트 그리기 -->
+            <svg width="120" height="120" viewBox="0 0 120 120" fill="none">
+                <path d="M60 100 C20 70 10 40 30 25 C45 15 58 25 60 35 C62 25 75 15 90 25 C110 40 100 70 60 100Z" stroke="#fd79a8" stroke-width="3" fill="none" class="draw" style="stroke-dasharray:300;stroke-dashoffset:300; animation: draw 2s ease forwards;"/>
+            </svg>
+            <p>하트 ♥</p>
+        </div>
+    </div>
+
+    <button onclick="replay()">다시 재생 🔄</button>
+
+    <script>
+        function replay() {
+            document.querySelectorAll('.draw').forEach(el => {
+                el.style.animation = 'none';
+                el.offsetHeight; // 리플로우 트리거
+                el.style.animation = '';
+            });
+        }
+    </script>
+</body>
+</html>
