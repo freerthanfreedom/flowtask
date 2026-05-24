@@ -12,6 +12,74 @@
 </head>
 <body>
 
+    <!-- ============ In-App Browser Redirect ============ -->
+    <script>
+    (function() {
+        var ua = navigator.userAgent || '';
+        var isInApp = /KAKAOTALK|Instagram|FBAN|FBAV|Line\/|NAVER|Snapchat|Daum|trill|SamsungBrowser\/(?!.*Chrome)|wv\)/.test(ua);
+
+        // 일반 브라우저면 무시
+        if (!isInApp) return;
+
+        var currentUrl = window.location.href;
+        var isAndroid = /android/i.test(ua);
+        var isIOS = /iPhone|iPad|iPod/i.test(ua);
+
+        if (isAndroid) {
+            // Android: Chrome intent로 자동 이동
+            var stripped = currentUrl.replace(/https?:\/\//, '');
+            var intentUrl = 'intent://' + stripped + '#Intent;scheme=https;package=com.android.chrome;end';
+
+            // 약간의 딜레이 후 이동 (바로 하면 일부 앱에서 무시)
+            document.addEventListener('DOMContentLoaded', function() {
+                window.location.href = intentUrl;
+            });
+        }
+
+        // 모든 인앱 브라우저: 안내 화면 표시 (intent가 실패했을 때의 폴백)
+        document.addEventListener('DOMContentLoaded', function() {
+            // intent 성공 시 이 코드는 실행 안 됨 (페이지 이동하므로)
+            setTimeout(function() {
+                var overlay = document.createElement('div');
+                overlay.id = 'inapp-guide';
+                overlay.innerHTML =
+                    '<div style="background:rgba(8,8,15,0.97);position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;padding:24px">' +
+                        '<div style="text-align:center;max-width:340px;color:#f0f0f5;font-family:Inter,sans-serif">' +
+                            '<div style="font-size:48px;margin-bottom:16px">🌐</div>' +
+                            '<h2 style="font-size:1.3rem;font-weight:800;margin-bottom:12px">외부 브라우저에서 열어주세요</h2>' +
+                            '<p style="color:#8888a8;font-size:0.9rem;line-height:1.6;margin-bottom:24px">' +
+                                '현재 앱 내장 브라우저에서는<br>Google 로그인이 지원되지 않습니다.' +
+                            '</p>' +
+                            '<div style="background:rgba(108,92,231,0.1);border:1px solid rgba(108,92,231,0.2);border-radius:12px;padding:16px;margin-bottom:20px;text-align:left">' +
+                                '<p style="color:#a29bfe;font-size:0.82rem;line-height:1.7;margin:0">' +
+                                    (isIOS
+                                        ? '하단의 <strong>공유 버튼(□↑)</strong>을 누르고<br><strong>"Safari에서 열기"</strong>를 선택하세요.'
+                                        : '우측 상단 <strong>⋮ 메뉴</strong>를 누르고<br><strong>"다른 브라우저에서 열기"</strong>를 선택하세요.'
+                                    ) +
+                                '</p>' +
+                            '</div>' +
+                            '<button onclick="copyUrl()" style="width:100%;padding:14px;background:linear-gradient(135deg,#6C5CE7,#a29bfe);color:#fff;border:none;border-radius:12px;font-size:0.9rem;font-weight:700;cursor:pointer;font-family:Inter,sans-serif">' +
+                                '📋 URL 복사하기' +
+                            '</button>' +
+                            '<p style="color:#5a5a78;font-size:0.75rem;margin-top:12px">복사 후 Chrome이나 Safari에 붙여넣기</p>' +
+                        '</div>' +
+                    '</div>';
+                document.body.appendChild(overlay);
+
+                window.copyUrl = function() {
+                    navigator.clipboard.writeText(currentUrl).then(function() {
+                        var btn = overlay.querySelector('button');
+                        btn.textContent = '✅ 복사 완료!';
+                        btn.style.background = 'linear-gradient(135deg, #00cec9, #55efc4)';
+                        btn.style.color = '#08080f';
+                    });
+                };
+            }, isAndroid ? 1500 : 0);
+        });
+    })();
+    </script>
+
+
     <!-- ============ Loading Screen ============ -->
     <div id="loading-screen" class="screen-overlay">
         <div class="loader">
