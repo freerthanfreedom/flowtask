@@ -78,7 +78,6 @@ function spawnConfetti(x, y) {
 
 function animateParticles() {
     pCtx.clearRect(0, 0, $particleCanvas.width, $particleCanvas.height);
-    particles = particles.filter(p => p.life > 0);
     particles.forEach(p => {
         p.x += p.vx;
         p.y += p.vy;
@@ -86,8 +85,10 @@ function animateParticles() {
         p.vx *= 0.99;
         p.life -= p.decay;
 
+        if (p.life <= 0) return;
+
         pCtx.save();
-        pCtx.globalAlpha = Math.max(0, p.life);
+        pCtx.globalAlpha = p.life;
         pCtx.fillStyle = p.color;
 
         if (p.isConfetti) {
@@ -97,11 +98,12 @@ function animateParticles() {
             pCtx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 0.6);
         } else {
             pCtx.beginPath();
-            pCtx.arc(p.x, p.y, p.size * p.life, 0, Math.PI * 2);
+            pCtx.arc(p.x, p.y, Math.max(0.1, p.size * p.life), 0, Math.PI * 2);
             pCtx.fill();
         }
         pCtx.restore();
     });
+    particles = particles.filter(p => p.life > 0);
     requestAnimationFrame(animateParticles);
 }
 animateParticles();
