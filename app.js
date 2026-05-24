@@ -77,33 +77,41 @@ function spawnConfetti(x, y) {
 }
 
 function animateParticles() {
-    pCtx.clearRect(0, 0, $particleCanvas.width, $particleCanvas.height);
-    particles.forEach(p => {
-        p.x += p.vx;
-        p.y += p.vy;
-        p.vy += 0.12;
-        p.vx *= 0.99;
-        p.life -= p.decay;
+    try {
+        pCtx.clearRect(0, 0, $particleCanvas.width, $particleCanvas.height);
+        for (let i = particles.length - 1; i >= 0; i--) {
+            const p = particles[i];
+            p.x += p.vx;
+            p.y += p.vy;
+            p.vy += 0.12;
+            p.vx *= 0.99;
+            p.life -= p.decay;
 
-        if (p.life <= 0) return;
+            if (p.life <= 0) {
+                particles.splice(i, 1);
+                continue;
+            }
 
-        pCtx.save();
-        pCtx.globalAlpha = p.life;
-        pCtx.fillStyle = p.color;
+            pCtx.save();
+            pCtx.globalAlpha = p.life;
+            pCtx.fillStyle = p.color;
 
-        if (p.isConfetti) {
-            pCtx.translate(p.x, p.y);
-            p.rotation += p.rotSpeed;
-            pCtx.rotate(p.rotation * Math.PI / 180);
-            pCtx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 0.6);
-        } else {
-            pCtx.beginPath();
-            pCtx.arc(p.x, p.y, Math.max(0.1, p.size * p.life), 0, Math.PI * 2);
-            pCtx.fill();
+            if (p.isConfetti) {
+                pCtx.translate(p.x, p.y);
+                p.rotation += p.rotSpeed;
+                pCtx.rotate(p.rotation * Math.PI / 180);
+                pCtx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 0.6);
+            } else {
+                const radius = Math.max(0.1, p.size * p.life);
+                pCtx.beginPath();
+                pCtx.arc(p.x, p.y, radius, 0, Math.PI * 2);
+                pCtx.fill();
+            }
+            pCtx.restore();
         }
-        pCtx.restore();
-    });
-    particles = particles.filter(p => p.life > 0);
+    } catch (e) {
+        console.warn('Particle error:', e);
+    }
     requestAnimationFrame(animateParticles);
 }
 animateParticles();
